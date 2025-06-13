@@ -1,8 +1,9 @@
 <template>
 	<div id="container" ref="container"></div>
+    <EventDrawer ref="eventDrawerRef" />
 </template>
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, provide, ref } from "vue";
+import { defineAsyncComponent, onBeforeUnmount, onMounted, provide, ref, useTemplateRef, type Ref } from "vue";
 import LogicFlow from "@logicflow/core";
 import '@logicflow/core/dist/index.css';
 import CustomNode from "./plugin/node/index";
@@ -15,6 +16,7 @@ import extraProps from './utils/extraProps';
 import type { ExtraPropsType } from "./types/ExtraPropsType";
 import { download, bpmnIdGenerator } from './utils/tools';
 import CustomTheme from './plugin/theme/custom';
+const EventDrawer = defineAsyncComponent(() => import('./component/EventDrawer/index.vue'))
 // 拖拽面板
 LogicFlow.use(DndPanel)
 //控制面板
@@ -27,6 +29,8 @@ LogicFlow.use(Menu);
 const container = ref<HTMLElement>();
 const LF = ref<LogicFlow>()
 provide('LF', LF)
+
+const eventDrawerRef = useTemplateRef('eventDrawerRef') as Ref<InstanceType<typeof EventDrawer>>
 
 function init()  {
     if (!container.value) return;
@@ -103,10 +107,13 @@ function init()  {
 
     // 监听事件
     const { eventCenter } = LF.value.graphModel;
-    eventCenter.on('node:click', (args: any) => {
-        console.log('节点：' + args.data.text.value);
-        console.log(args);
+    eventCenter?.on('node:click, edge:click', (args: Record<string, any>) => {
+		eventDrawerRef.value?.openDrawer(args.data);
     })
+    // 禁止连线监听处理
+    eventCenter?.on('connection:not-allowed', (args: Record<string, any>) => {
+        alert(args.msg)
+    });
 }
 
 // 渲染流程图数据

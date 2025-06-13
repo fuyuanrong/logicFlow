@@ -2,9 +2,26 @@ import { h, CircleNode, CircleNodeModel } from '@logicflow/core';
 
 // 开始节点 Model
 class StartEventModel extends CircleNodeModel {
+	getConnectedTargetRules() {
+		const rules = super.getConnectedTargetRules();
+		const notAsTarget: any = {
+			message: '起始节点不能作为边的终点',
+			validate: () => false,
+		};
+		rules.push(notAsTarget);
+		return rules;
+	}
 	initNodeData(data: any) {
 		super.initNodeData(data);
 		this.r = 40; // 设置节点半径
+		//开始节点不能直接连结束节点
+		const endEventNotAsTarget: any = {
+			message: '开始节点不能直接连结束节点',
+			validate: (sourceNode: { type: string }, targetNode: { type: string }) => {
+				return sourceNode.type !== 'bpmn:startEvent' || targetNode.type !== 'bpmn:endEvent';
+			},
+		};
+		this.sourceRules.push(endEventNotAsTarget);
 	}
 	getNodeStyle() {
 		const style = super.getNodeStyle();

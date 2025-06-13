@@ -1,7 +1,22 @@
-import { h, CircleNode, CircleNodeModel } from '@logicflow/core';
+import { h, CircleNode, CircleNodeModel, BaseNodeModel } from '@logicflow/core';
 
 // 结束节点 Model
 class EndEventModel extends CircleNodeModel {
+	getConnectedSourceRules(): any[] {
+		const rules = super.getConnectedSourceRules();
+		const geteWayOnlyAsTarget: any = {
+			message: '结束节点只能连入，不能连出！',
+			validate: (source: BaseNodeModel) => {
+				let isValid = true;
+				if (source) {
+					isValid = false;
+				}
+				return isValid;
+			},
+		};
+		rules.push(geteWayOnlyAsTarget);
+		return rules;
+	}
 	initNodeData(data: any) {
 		super.initNodeData(data);
 		this.r = 40; // 设置节点半径
