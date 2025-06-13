@@ -1,10 +1,10 @@
 import LogicFlow, { PolygonNode, PolygonNodeModel } from '@logicflow/core';
 
 // 自定义节点的 Model
-class ExclusiveGatewayModel extends PolygonNodeModel {
+class ComplexGatewayModel extends PolygonNodeModel {
 	// 设置节点类型
 	getNodeType() {
-		return 'bpmn:exclusiveGateway';
+		return 'bpmn:ComplexGateway';
 	}
 
 	// 设置节点形状为菱形
@@ -30,17 +30,17 @@ class ExclusiveGatewayModel extends PolygonNodeModel {
 }
 
 // 自定义节点的 View
-class ExclusiveGatewayView extends PolygonNode {
+class ComplexGatewayView extends PolygonNode {
 	// 可以在这里自定义节点的渲染逻辑
 }
 
 
 //自定义节点
 export default {
-	type: 'bpmn:exclusiveGateway',
-	view: ExclusiveGatewayView,
-	model: ExclusiveGatewayModel,
-	label: '排他网关',
-	text: '排他网关',
-	icon: '/bpmn-icon/exclusive-gateway.svg',
+	type: 'bpmn:complexGateway',
+	view: ComplexGatewayView,
+	model: ComplexGatewayModel,
+	label: '复杂网关',
+	text: '复杂网关',
+	icon: '/bpmn-icon/complex-gateway.svg',
 };

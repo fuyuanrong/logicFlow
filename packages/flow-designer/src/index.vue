@@ -2,21 +2,25 @@
 	<div id="container" ref="container"></div>
 </template>
 <script setup lang="ts">
-import { onMounted, provide, ref } from "vue";
+import { onBeforeUnmount, onMounted, provide, ref } from "vue";
 import LogicFlow from "@logicflow/core";
 import '@logicflow/core/dist/index.css';
-import CustomNode from "./node/index";
-import CustomEdge from "./edge/index";
-// import { DndPanel, Menu, BPMNElements, BPMNAdapter } from '@logicflow/extension'
+import CustomNode from "./plugin/node/index";
+import CustomEdge from "./plugin/edge/index";
+import CustomDnd from './plugin/menu/DndPanel';
 import { DndPanel, Control, Menu, BPMNAdapter  } from '@logicflow/extension';
 import '@logicflow/extension/lib/style/index.css';
-
+import resetMenu from './plugin/menu/MenuConfig.ts';
+import extraProps from './utils/extraProps';
+import type { ExtraPropsType } from "./types/ExtraPropsType";
+import { download, bpmnIdGenerator } from './utils/tools';
+import CustomTheme from './plugin/theme/custom';
 // 拖拽面板
 LogicFlow.use(DndPanel)
 //控制面板
 LogicFlow.use(Control)
 // 注册插件
-LogicFlow.use(BPMNAdapter);
+LogicFlow.use(BPMNAdapter, extraProps as unknown as ExtraPropsType);
 // 注册菜单
 LogicFlow.use(Menu);
 
@@ -42,7 +46,14 @@ function init()  {
                 strokeWidth: 1.5,
             },
         },
+        idGenerator: (args: any) => {
+            let graphData = LF.value?.getGraphRawData() as any;
+            // type: 当前元素类型（如 'bpmn:exclusiveGateway'）
+            return bpmnIdGenerator(args, graphData);
+        },
     })
+    //设置主题
+    LF.value?.setTheme(CustomTheme)
     // 注册自定义节点
     if (Array.isArray(CustomNode) && LF.value) {
         CustomNode?.forEach(item => {
@@ -55,9 +66,12 @@ function init()  {
             LF.value?.register(item)
         })
     }
-
+    //设置添加的默认边类型
+    LF.value?.setDefaultEdgeType('bpmn:sequenceFlow');
     //设置左侧拖拽面板dndPanel
-    (LF.value?.extension.dndPanel as DndPanel)?.setPatternItems(CustomNode);
+    (LF.value?.extension.dndPanel as DndPanel)?.setPatternItems(CustomDnd);
+    //重置菜单
+    (LF.value?.extension.menu as Menu)?.setMenuConfig(resetMenu(LF.value));
     //控制面板增加功能
     //下载XML
     (LF.value?.extension.control as Control)?.addItem({
@@ -83,7 +97,9 @@ function init()  {
     })
 
     // 渲染流程图数据
-    LF.value.render({})
+    setTimeout(() => {
+        LF.value?.render({});
+    }, 0);
 
     // 监听事件
     const { eventCenter } = LF.value.graphModel;
@@ -91,15 +107,6 @@ function init()  {
         console.log('节点：' + args.data.text.value);
         console.log(args);
     })
-}
-function download(filename: string, text: string) {
-    var element = document.createElement('a')
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
 }
 
 // 渲染流程图数据
@@ -109,25 +116,42 @@ function renderData(data: LogicFlow.GraphConfigData) {
     let graphData = LF.value?.adapterIn(data);
     console.log(graphData);
     let { edges, nodes } = graphData;
+    try {
+        LF.value?.renderRawData({ edges, nodes });
+    } catch (error) {
+        alert(error)
+        console.log(error);
+    }
+}
+//渲染 graphData数据
+function renderRawData(graphData: LogicFlow.GraphConfigData) {
+    if (!LF.value || !LF.value.render) return;
+    let { edges, nodes } = graphData;
+    try {
+        LF.value?.renderRawData({ edges, nodes });
+    } catch (error: any) {
+        alert(error.message)
+    }
 
-    edges.forEach((data:any) => {
-        data.startPoint = data.pointsList[0];
-        data.endPoint = data.pointsList[data.pointsList.length - 1];
-    })
-    nodes.forEach((data: any) => {
-        // 自定义节点bug 处理  但是找不到原因
-        let isCostom = ['bpmn:dataImportTask', 'bpmn:processorTask', "bpmn:dataSoruceTask"].some(item => item === data.type)
-        if (!isCostom) return;
-        data.x = data.x + (data.properties.width/2);
-        data.y = data.y + (data.properties.height/2);
-    })
-    LF.value?.renderRawData({ edges, nodes });
-    // LF.value?.renderRawData(graphData)
+}
+//获取 graphData数据
+function getRawData() {
+    return LF.value?.getGraphData();
+}
+//获取XML数据
+function getXmlData() {
+    let graphData = LF.value?.getGraphRawData() as LogicFlow.GraphData;
+    return LF.value?.adapterOut && LF.value?.adapterOut(graphData,  extraProps as unknown as ExtraPropsType);
 }
 onMounted(() => {
     init();
 })
-defineExpose({renderData})
+defineExpose({ renderData, renderRawData, getRawData, getXmlData })
+onBeforeUnmount(() => {
+    //移除所有监听事件
+    const { eventCenter } = LF.value?.graphModel || {};
+    eventCenter?.off('')
+})
 </script>
 <style scoped>
 #container{
