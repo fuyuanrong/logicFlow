@@ -16,6 +16,7 @@ import extraProps from './utils/extraProps';
 import type { ExtraPropsType } from "./types/ExtraPropsType";
 import { download, bpmnIdGenerator } from './utils/tools';
 import CustomTheme from './plugin/theme/custom';
+import { ElMessage } from "element-plus";
 const EventDrawer = defineAsyncComponent(() => import('./component/EventDrawer/index.vue'))
 // 拖拽面板
 LogicFlow.use(DndPanel)
@@ -108,11 +109,15 @@ function init()  {
     // 监听事件
     const { eventCenter } = LF.value.graphModel;
     eventCenter?.on('node:click, edge:click', (args: Record<string, any>) => {
+        let { type } = args.data; 
+        if (type === 'bpmn:startEvent' || type === 'bpmn:endEvent') {
+			return;
+		}
 		eventDrawerRef.value?.openDrawer(args.data);
     })
     // 禁止连线监听处理
     eventCenter?.on('connection:not-allowed', (args: Record<string, any>) => {
-        alert(args.msg)
+        ElMessage.error(args.msg)
     });
 }
 
@@ -126,7 +131,7 @@ function renderData(data: LogicFlow.GraphConfigData) {
     try {
         LF.value?.renderRawData({ edges, nodes });
     } catch (error) {
-        alert(error)
+        ElMessage.error('渲染数据失败')
         console.log(error);
     }
 }
@@ -137,7 +142,7 @@ function renderRawData(graphData: LogicFlow.GraphConfigData) {
     try {
         LF.value?.renderRawData({ edges, nodes });
     } catch (error: any) {
-        alert(error.message)
+        ElMessage.error(error.message)
     }
 
 }

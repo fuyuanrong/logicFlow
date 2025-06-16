@@ -1,4 +1,5 @@
 import type LogicFlow from '@logicflow/core';
+import { ElMessage } from 'element-plus';
 
 // 重置菜单
 export default function resetMenu(lf: LogicFlow | null) {
@@ -26,7 +27,7 @@ export default function resetMenu(lf: LogicFlow | null) {
 				className: 'lf-menu-rect',
 				callback(node: { type: string; x: number; y: number; id: string }) {
 					if (node.type === 'bpmn:endEvent') {
-						alert('结束节点不能添加任务');
+						ElMessage.error('结束节点不能添加任务');
 						return;
 					}
 					//判断 节点是否已有节点连接 解决多次点击添加任务节点造成重叠显示不明显问题
@@ -60,7 +61,7 @@ export default function resetMenu(lf: LogicFlow | null) {
 				className: 'lf-menu-rhombus',
 				callback(node: { type: string; x: number; y: number; id: string }) {
 					if (node.type === 'bpmn:endEvent') {
-						alert('结束节点不能添加网关');
+						ElMessage.error('结束节点不能添加网关');
 						return;
 					}
 					//判断 节点是否已有节点连接 解决多次点击添加任务节点造成重叠显示不明显问题
@@ -91,7 +92,7 @@ export default function resetMenu(lf: LogicFlow | null) {
 				className: 'lf-menu-end',
 				callback: (node: { type: string; x: number; y: number; id: string }) => {
 					if (node.type === 'bpmn:endEvent') {
-						alert('结束节点不能添加结束节点');
+						ElMessage.error('结束节点不能添加结束节点');
 						return;
 					}
 					//判断 节点是否已有节点连接 解决多次点击添加任务节点造成重叠显示不明显问题
